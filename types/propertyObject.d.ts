@@ -16,6 +16,15 @@ import {
   UnitTypeSeconds,
 } from "./valueTypes"
 
+export type propertyObject = {
+  name: string
+  id?: string
+  description?: string
+  values: {
+    [key: string]: any
+  }
+}
+
 export type fillValuesType = {
   fill: {
     value: ColorRgba
@@ -50,4 +59,34 @@ export type gradientValuesType = {
     value: number
     type: PropertyType
   }
+}
+
+export type effectPropertyInterface = propertyObject & {
+  values: {
+    effectType: {
+      value: EffectType
+    }
+    radius: {
+      value: number
+      unit: string
+    }
+    color?: {
+      value: ColorRgba
+      type: PropertyType
+    }
+    offset?: {
+      x: {
+        value: number
+        unit: string
+      }
+      y: {
+        value: number
+        unit: string
+      }
+    }
+    spread?: {
+      value: number
+      unit: string
+    }
+  }[]
 }

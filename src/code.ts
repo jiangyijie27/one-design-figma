@@ -1,6 +1,7 @@
 import { PropertyType } from "../types/valueTypes"
 import { fillValuesType } from "../types/propertyObject"
 import { convertPaintToRgba } from "./utilities/convertColor"
+import extractEffects from "./utilities/extractEffects"
 
 figma.showUI(__html__, { width: 480, height: 480 })
 
@@ -38,6 +39,10 @@ const getTokens = () => {
     // get description starts with "token="
     const token = description?.split("token=")[1]
 
+    if (!token) {
+      return prevs
+    }
+
     // 只支持了 solid 的 paint token 导出
     const values = paints.length
       ? paints.map((paint) => extractFills(paint))
@@ -50,15 +55,87 @@ const getTokens = () => {
       {
         token,
         values,
-        css: `--${token}: rgba(${r}, ${g}, ${b}, ${a});`,
+        css: {
+          [`--${token}`]: `rgba(${r}, ${g}, ${b}, ${a})`,
+        },
       },
     ]
-  }, [] as { token: string; values: fillValuesType[] }[])
+  }, [] as { token: string; values: fillValuesType[]; css: { [key: string]: string } }[])
 
-  console.log("yijie", textStyles)
+  const texts = textStyles.reduce(
+    (prevs, textStyle) => {
+      const { description } = textStyle
+      const token = description?.split("token=")[1]
+
+      if (!token) {
+        return prevs
+      }
+
+      const { fontSize, lineHeight } = textStyle
+
+      const fontSizeValue = `${fontSize}px`
+      let lineHeightValue = "auto"
+
+      if (lineHeight.unit === "PIXELS") {
+        lineHeightValue = `${lineHeight.value}px`
+      }
+
+      const values = {
+        fontSize: fontSizeValue,
+        lineHeight: lineHeightValue,
+      }
+
+      return [
+        ...prevs,
+        {
+          token,
+          values,
+          css: {
+            [`--${token}-font-size`]: `${fontSizeValue}`,
+            [`--${token}-line-height`]: `${lineHeightValue}`,
+          },
+        },
+      ]
+    },
+    [] as {
+      token: string
+      values: {
+        fontSize: string
+        lineHeight: string
+      }
+      css: { [key: string]: string }
+    }[]
+  )
+
+  const shadowsExtracted = extractEffects(effects)
+
+  const shadows = shadowsExtracted.map(({ values, description }) => {
+    const token = description?.split("token=")[1]
+    const shadows = values
+      .reverse()
+      .map(({ color, offset, radius, spread }) => {
+        if (!color) {
+          return ""
+        }
+        const { r, g, b, a } = color.value
+        return `${offset?.x.value || 0}px ${offset?.y.value || 0}px ${
+          radius?.value || 0
+        }px ${spread?.value || 0}px rgba(${r}, ${g}, ${b}, ${a})`
+      })
+
+    return {
+      token,
+      values: shadows,
+      css: {
+        [`--${token}`]: shadows.join(", "),
+      },
+    }
+  })
 
   return {
     colors,
+    texts,
+    shadows,
   }
 }
 
