@@ -1,0 +1,10 @@
+{
+  "name": "One Design Figma",
+  "id": "889805913917507178",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": [
+    "figma"
+  ]
+}
